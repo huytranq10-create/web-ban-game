@@ -154,7 +154,7 @@ Tất cả API trả về JSON. Bảng dưới là bản dự kiến, nếu thay
 2. Clone dự án vào thư mục `htdocs` của XAMPP:
    ```bash
    cd C:/xampp/htdocs
-   git clone <đường-dẫn-repo> web-ban-game
+   git clone https://github.com/huytranq10-create/web-ban-game.git web-ban-game
    ```
 3. Tạo file cấu hình kết nối: copy `config/db.sample.php` thành `config/db.php`, rồi sửa thông tin (tên database, user, mật khẩu) cho đúng với máy của bạn.
 4. Mở **phpMyAdmin** (`http://localhost/phpmyadmin`), import lần lượt:
