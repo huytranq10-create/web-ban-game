@@ -110,12 +110,7 @@ Mọi truy vấn MySQL nằm trong file này. Các trang PHP chỉ gọi hàm, k
 | Đơn hàng | `tao_don_hang`, `lay_don_hang_cua_nguoidung`, `lay_chi_tiet_don_hang`, `lay_tat_ca_don_hang`, `cap_nhat_trang_thai_don_hang` |
 | Đánh giá | `lay_danh_gia_game`, `luu_danh_gia` |
 
-Một số điểm đáng chú ý:
 
-- `xoa_game()` **không xóa hẳn** mà chỉ đặt `dang_ban = 0`, vì game có thể đã nằm trong đơn hàng cũ. Mọi truy vấn hiển thị game đều lọc `dang_ban = 1`.
-- `them_vao_gio_hang()` dùng `insert ... on duplicate key update`, nên thêm game đã có trong giỏ thì cộng dồn số lượng.
-- `cap_nhat_so_luong_gio_hang()` với số lượng `<= 0` sẽ xóa game khỏi giỏ.
-- `lay_danh_sach_game()` và `lay_game_theo_id()` kèm theo điểm đánh giá trung bình và số lượt đánh giá.
 
 ---
 
