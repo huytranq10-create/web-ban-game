@@ -51,7 +51,6 @@ web-ban-game/
 ├── login.php            Đăng nhập
 ├── register.php         Đăng ký
 ├── logout.php           Đăng xuất
-├── test-db.php          File kiểm thử hàm DB (chỉ dùng khi phát triển)
 │
 ├── includes/            Phần dùng chung
 │   ├── header.php       Mở đầu HTML, nạp functions và db, bật session
@@ -71,7 +70,6 @@ web-ban-game/
 │   └── seed.sql         Dữ liệu mẫu và tài khoản mẫu
 ├── config/
 │   ├── db.sample.php    Mẫu cấu hình kết nối
-│   └── db.php           Cấu hình thật (không commit)
 └── assets/
     ├── css/             style.css, admin.css
     └── img/games/       Ảnh bìa game
