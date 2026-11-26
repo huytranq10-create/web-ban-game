@@ -8,7 +8,7 @@ Website bán game bản quyền viết bằng **PHP thuần + MySQL**. Khách h�
 
 ## 1. Tổng quan cách hoạt động
 
-Đây là website **render phía máy chủ (server-side rendering)**. Mỗi lần người dùng bấm link hoặc gửi form, trình duyệt gửi một request tới một file `.php`. PHP truy vấn MySQL, dựng ra HTML hoàn chỉnh rồi trả về cho trình duyệt. Không có bước nào cần JavaScript để lấy hay gửi dữ liệu.
+Đây là website **render phía máy chủ (server-side rendering)**. Mỗi lần người dùng bấm link hoặc gửi form, trình duyệt gửi một request tới một file `.php`. PHP truy vấn MySQL, dựng ra HTML hoàn chỉnh rồi trả về cho trình duyệt.
 
 ```
 Trình duyệt ──(link / form GET, POST)──► trang .php ──gọi hàm──► includes/db.php ──PDO──► MySQL
@@ -24,15 +24,6 @@ Một trang PHP thường làm theo thứ tự sau:
 4. `include 'includes/navbar.php'` – in thanh điều hướng (thể loại lấy từ DB, số lượng trong giỏ).
 5. In phần nội dung HTML bằng các vòng lặp `foreach` trên dữ liệu vừa lấy từ DB.
 6. `include 'includes/footer.php'` – in chân trang và đóng `</body>`.
-
-### Vai trò của JavaScript
-
-Chức năng chính **không phụ thuộc JavaScript**. Chỉ có hai đoạn nhỏ mang tính hỗ trợ:
-
-- `includes/footer.php`: đoạn `<script>` để bấm mở/đóng menu dropdown. Khi không có JS, menu vẫn mở được khi rê chuột nhờ CSS (`.nav-dropdown:hover`).
-- `admin/games.php`: `onsubmit="return confirm(...)"` hỏi xác nhận trước khi ẩn game.
-
-Thư mục `assets/js/` (`api.js`, `auth.js`, `cart.js`, `games.js`, `main.js`) và thư mục `api/` (`games.php`, `cart.php`, `orders.php`, `auth.php`) hiện **còn trống**, chưa trang nào dùng đến. Đây là chỗ dành cho tính năng gọi API bằng `fetch` nếu muốn mở rộng sau này.
 
 ---
 
@@ -65,7 +56,7 @@ web-ban-game/
 ├── includes/            Phần dùng chung
 │   ├── header.php       Mở đầu HTML, nạp functions và db, bật session
 │   ├── navbar.php       Thanh điều hướng, dropdown thể loại, đếm giỏ hàng
-│   ├── footer.php       Chân trang và đoạn JS dropdown
+│   ├── footer.php       Chân trang
 │   ├── functions.php    Session, kiểm tra quyền, định dạng giá
 │   └── db.php           Kết nối PDO và toàn bộ hàm truy vấn MySQL
 │
@@ -75,7 +66,6 @@ web-ban-game/
 │   ├── orders.php       Xem đơn và đổi trạng thái
 │   └── users.php        Danh sách người dùng
 │
-├── api/                 (để trống, dành cho phần fetch/JSON)
 ├── database/
 │   ├── schema.sql       Tạo database và các bảng
 │   └── seed.sql         Dữ liệu mẫu và tài khoản mẫu
@@ -84,7 +74,6 @@ web-ban-game/
 │   └── db.php           Cấu hình thật (không commit)
 └── assets/
     ├── css/             style.css, admin.css
-    ├── js/              (trống)
     └── img/games/       Ảnh bìa game
 ```
 
@@ -200,38 +189,3 @@ Trang này chưa có cổng thanh toán thật. Đơn được tạo ở trạng
 - Dữ liệu in ra HTML đều qua `htmlspecialchars()` để chống XSS.
 - Kiểm tra quyền ở đầu mỗi trang cần bảo vệ; đơn hàng được lọc theo chủ sở hữu.
 - `config/db.php` (thông tin kết nối thật) nằm trong `.gitignore`, không đưa lên GitHub.
-
----
-
-## 8. Cài đặt và chạy
-
-1. Cài **XAMPP**, bật **Apache** và **MySQL**.
-2. Đặt thư mục dự án vào `C:/xampp/htdocs/web-ban-game`.
-3. Copy `config/db.sample.php` thành `config/db.php`, sửa thông tin nếu cần. Mặc định XAMPP: host `localhost`, port `3306`, database `web_ban_game`, user `root`, mật khẩu rỗng.
-4. Mở **phpMyAdmin** (`http://localhost/phpmyadmin`) và import lần lượt:
-   1. `database/schema.sql` (tạo database và bảng; file có lệnh `drop table`, import lại sẽ mất dữ liệu cũ)
-   2. `database/seed.sql` (dữ liệu mẫu)
-5. Truy cập `http://localhost/web-ban-game`.
-
-Kiểm tra nhanh kết nối và các hàm DB: mở `http://localhost/web-ban-game/test-db.php`. **Xóa file này trước khi nộp bài hoặc đưa lên mạng.**
-
-### Tài khoản mẫu
-
-| Tên đăng nhập | Mật khẩu | Vai trò |
-|---|---|---|
-| `admin` | `Admin@123` | Quản trị viên |
-| `khach1` | `Khach@123` | Khách hàng |
-| `khach2` | `Khach@123` | Khách hàng |
-
-> Website cần PHP và MySQL để chạy. GitHub Pages hoặc mở trực tiếp file `.php` bằng trình duyệt sẽ không hoạt động.
-
----
-
-## 9. Hạn chế hiện tại
-
-- Chưa có form để người dùng gửi đánh giá. Hàm `luu_danh_gia()` đã có trong `db.php` nhưng chưa trang nào gọi.
-- Menu "GAMES" trên thanh điều hướng có các link `games.php?loai=...` (offline, full, steam-key, xbox), nhưng `games.php` chưa xử lý tham số `loai`, nên các link này chưa lọc được.
-- Chưa có thanh toán trực tuyến; việc xác nhận thanh toán do admin đổi trạng thái đơn.
-- Chưa có token CSRF cho các form POST.
-- Upload ảnh ở trang admin chưa kiểm tra loại file.
-- `assets/js/` và `api/` chưa được cài đặt (xem mục 1).
