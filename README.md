@@ -1,34 +1,49 @@
-# Web Bán Game
-// Dung test
+# GameStore – Web bán game
 
 Đồ án môn **Lập trình ứng dụng web** – Trường Đại học Văn Lang.
 
-Website bán game được xây dựng bằng **HTML, CSS, JavaScript, PHP và MySQL**. Người dùng có thể xem danh sách game, tìm kiếm và lọc theo thể loại, thêm game vào giỏ hàng, đặt hàng và xem lịch sử đơn hàng. Quản trị viên có thể quản lý game, đơn hàng và người dùng.
+Website bán game bản quyền viết bằng **PHP thuần + MySQL**. Khách hàng xem và tìm game, thêm vào giỏ, đặt hàng và xem lịch sử đơn. Quản trị viên quản lý game, đơn hàng và người dùng.
 
 ---
 
-## 1. Thành viên và phân công
+## 1. Tổng quan cách hoạt động
 
-| Thành viên | Vai trò | Phụ trách chính |
-|---|---|---|
-| **Hiếu** | PHP (chính) + HTML + CSS | Các trang PHP ở thư mục gốc và `admin/`, `includes/` (header, navbar, footer, `functions.php`), session và phân quyền, thiết kế giao diện, responsive, `assets/css/`, `assets/img/` |
-| **Huy** | MySQL + PHP phục vụ MySQL | Thiết kế database (`database/`), `config/db.sample.php`, `includes/db.php` (kết nối PDO và các hàm truy vấn MySQL) |
-| **Dũng** | JavaScript + PHP phục vụ JS | Toàn bộ mã JS (`assets/js/`) và các endpoint PHP trả JSON trong `api/` mà JS gọi tới |
+Đây là website **render phía máy chủ (server-side rendering)**. Mỗi lần người dùng bấm link hoặc gửi form, trình duyệt gửi một request tới một file `.php`. PHP truy vấn MySQL, dựng ra HTML hoàn chỉnh rồi trả về cho trình duyệt. Không có bước nào cần JavaScript để lấy hay gửi dữ liệu.
 
-**Quy tắc:** ai phụ trách thư mục nào thì người đó chỉnh sửa. Muốn thay đổi thư mục của người khác thì nhắn trong nhóm trước.
+```
+Trình duyệt ──(link / form GET, POST)──► trang .php ──gọi hàm──► includes/db.php ──PDO──► MySQL
+      ▲                                       │
+      └──────────── HTML đã dựng sẵn ◄────────┘
+```
+
+Một trang PHP thường làm theo thứ tự sau:
+
+1. `include 'includes/header.php'` – nạp hàm dùng chung, kết nối DB, bật session, in phần `<head>`.
+2. Kiểm tra quyền (`requireLogin()` hoặc `requireAdmin()`) nếu trang yêu cầu đăng nhập.
+3. Nếu là request POST thì xử lý form, gọi hàm trong `db.php`, rồi `header('Location: ...')` để chuyển trang (mô hình *Post/Redirect/Get*, tránh gửi lại form khi tải lại trang).
+4. `include 'includes/navbar.php'` – in thanh điều hướng (thể loại lấy từ DB, số lượng trong giỏ).
+5. In phần nội dung HTML bằng các vòng lặp `foreach` trên dữ liệu vừa lấy từ DB.
+6. `include 'includes/footer.php'` – in chân trang và đóng `</body>`.
+
+### Vai trò của JavaScript
+
+Chức năng chính **không phụ thuộc JavaScript**. Chỉ có hai đoạn nhỏ mang tính hỗ trợ:
+
+- `includes/footer.php`: đoạn `<script>` để bấm mở/đóng menu dropdown. Khi không có JS, menu vẫn mở được khi rê chuột nhờ CSS (`.nav-dropdown:hover`).
+- `admin/games.php`: `onsubmit="return confirm(...)"` hỏi xác nhận trước khi ẩn game.
+
+Thư mục `assets/js/` (`api.js`, `auth.js`, `cart.js`, `games.js`, `main.js`) và thư mục `api/` (`games.php`, `cart.php`, `orders.php`, `auth.php`) hiện **còn trống**, chưa trang nào dùng đến. Đây là chỗ dành cho tính năng gọi API bằng `fetch` nếu muốn mở rộng sau này.
 
 ---
 
-## 2. Công nghệ sử dụng
+## 2. Công nghệ
 
-- **Giao diện:** HTML5, CSS3
-- **Tương tác phía trình duyệt:** JavaScript (dùng `fetch` để gọi API)
-- **Máy chủ:** PHP (kết nối database bằng PDO)
-- **Cơ sở dữ liệu:** MySQL
-- **Môi trường chạy:** XAMPP
-- **Quản lý mã nguồn:** Git và GitHub
-
-> **Lưu ý:** GitHub (và GitHub Pages) chỉ lưu mã nguồn và chạy được web tĩnh, không chạy được PHP/MySQL. Muốn chạy dự án thì dùng XAMPP trên máy hoặc đưa lên hosting có hỗ trợ PHP/MySQL.
+| Thành phần | Công nghệ |
+|---|---|
+| Giao diện | HTML5, CSS3 (`assets/css/style.css` cho khách, `assets/css/admin.css` cho quản trị), icon Font Awesome 6 qua CDN |
+| Máy chủ | PHP, dùng session để lưu trạng thái đăng nhập |
+| Cơ sở dữ liệu | MySQL, truy cập bằng PDO |
+| Môi trường chạy | XAMPP (Apache + MySQL) |
 
 ---
 
@@ -36,172 +51,187 @@ Website bán game được xây dựng bằng **HTML, CSS, JavaScript, PHP và M
 
 ```
 web-ban-game/
+├── index.php            Trang chủ: banner và các game nổi bật
+├── games.php            Danh sách game, lọc theo thể loại, tìm kiếm theo tên
+├── game-detail.php      Chi tiết một game và các đánh giá
+├── cart.php             Giỏ hàng
+├── checkout.php         Xác nhận đặt hàng
+├── orders.php           Lịch sử đơn hàng của người dùng
+├── login.php            Đăng nhập
+├── register.php         Đăng ký
+├── logout.php           Đăng xuất
+├── test-db.php          File kiểm thử hàm DB (chỉ dùng khi phát triển)
 │
-├── index.php                  # Trang chủ
-├── games.php                  # Danh sách game, lọc, tìm kiếm
-├── game-detail.php            # Chi tiết một game
-├── cart.php                   # Giỏ hàng
-├── checkout.php               # Thanh toán / đặt hàng
-├── login.php                  # Đăng nhập
-├── register.php               # Đăng ký
-├── orders.php                 # Lịch sử đơn hàng của người dùng
+├── includes/            Phần dùng chung
+│   ├── header.php       Mở đầu HTML, nạp functions và db, bật session
+│   ├── navbar.php       Thanh điều hướng, dropdown thể loại, đếm giỏ hàng
+│   ├── footer.php       Chân trang và đoạn JS dropdown
+│   ├── functions.php    Session, kiểm tra quyền, định dạng giá
+│   └── db.php           Kết nối PDO và toàn bộ hàm truy vấn MySQL
 │
-├── includes/                  # Phần dùng chung của các trang PHP
-│   ├── header.php
-│   ├── navbar.php
-│   ├── footer.php
-│   ├── functions.php
-│   └── db.php                 # Kết nối MySQL (PDO) và các hàm truy vấn
+├── admin/               Trang quản trị (chỉ vai trò admin)
+│   ├── index.php        Tổng quan: số game, đơn, người dùng, doanh thu
+│   ├── games.php        Thêm, sửa, ẩn game, upload ảnh
+│   ├── orders.php       Xem đơn và đổi trạng thái
+│   └── users.php        Danh sách người dùng
 │
-├── admin/                     # Trang quản trị
-│   ├── index.php
-│   ├── games.php
-│   ├── orders.php
-│   └── users.php
-│
-├── api/                       # Lớp trung gian JS <-> MySQL, trả JSON
-│   ├── games.php
-│   ├── cart.php
-│   ├── orders.php
-│   └── auth.php
-│
+├── api/                 (để trống, dành cho phần fetch/JSON)
 ├── database/
-│   ├── schema.sql             # Tạo database và các bảng
-│   └── seed.sql               # Dữ liệu mẫu
-│
+│   ├── schema.sql       Tạo database và các bảng
+│   └── seed.sql         Dữ liệu mẫu và tài khoản mẫu
 ├── config/
-│   ├── db.sample.php          # File mẫu (được commit)
-│   └── db.php                 # Thông tin kết nối thật (KHÔNG commit)
-│
-├── assets/
-│   ├── js/
-│   │   ├── api.js             # Hàm fetch dùng chung
-│   │   ├── games.js
-│   │   ├── cart.js
-│   │   ├── auth.js
-│   │   └── main.js
-│   ├── css/
-│   │   ├── style.css
-│   │   └── admin.css
-│   └── img/
-│       ├── games/
-│       └── banners/
-│
-├── .gitignore
-└── README.md
+│   ├── db.sample.php    Mẫu cấu hình kết nối
+│   └── db.php           Cấu hình thật (không commit)
+└── assets/
+    ├── css/             style.css, admin.css
+    ├── js/              (trống)
+    └── img/games/       Ảnh bìa game
 ```
 
-| Thư mục / file | Người phụ trách |
+---
+
+## 4. Cơ sở dữ liệu
+
+Database `web_ban_game` (utf8mb4) gồm 7 bảng:
+
+| Bảng | Nội dung | Ghi chú |
+|---|---|---|
+| `nguoidung` | Tài khoản | `vai_tro` là `khach` hoặc `admin`. `mat_khau` lưu bằng `password_hash()` |
+| `theloai` | Thể loại game | Dùng cho dropdown và bộ lọc |
+| `game` | Sản phẩm | `dang_ban = 1` là đang bán, `0` là đã ẩn. `hinh_anh` là tên file trong `assets/img/games/` |
+| `giohang` | Giỏ hàng | Khóa chính `(ma_nguoidung, ma_game)`: mỗi game chỉ một dòng, có `so_luong` |
+| `donhang` | Đơn hàng | `trang_thai`: `cho_xu_ly`, `da_thanh_toan`, `da_huy` |
+| `chitietdonhang` | Game trong từng đơn | `don_gia` lưu **giá lúc mua**, nên đổi giá game sau này không ảnh hưởng đơn cũ |
+| `danhgia` | Đánh giá 1–5 sao | Mỗi người chỉ đánh giá một game một lần |
+
+Quan hệ chính: `game → theloai`, `giohang → nguoidung + game`, `donhang → nguoidung`, `chitietdonhang → donhang + game`, `danhgia → nguoidung + game`. Khi xóa người dùng hoặc đơn hàng thì giỏ hàng, chi tiết đơn và đánh giá liên quan bị xóa theo (`on delete cascade`).
+
+---
+
+## 5. Lớp truy cập dữ liệu (`includes/db.php`)
+
+Mọi truy vấn MySQL nằm trong file này. Các trang PHP chỉ gọi hàm, không tự viết SQL.
+
+- `ket_noi_db()` tạo một kết nối PDO duy nhất cho cả lần chạy (biến `static`). PDO bật chế độ ném exception và tắt giả lập prepared statement.
+- Mọi truy vấn dùng **prepared statement** (tham số `?`), tránh SQL injection.
+
+| Nhóm | Hàm |
 |---|---|
-| Các trang `*.php` ở thư mục gốc, `admin/`, `includes/header.php`, `navbar.php`, `footer.php`, `functions.php` | Hiếu |
-| `assets/css/`, `assets/img/` | Hiếu |
-| `database/`, `config/db.sample.php`, `includes/db.php` | Huy |
-| `api/`, `assets/js/` | Dũng |
+| Game | `lay_danh_sach_theloai`, `lay_danh_sach_game($ma_theloai, $tu_khoa)`, `lay_game_theo_id`, `them_game`, `sua_game`, `xoa_game` |
+| Người dùng | `dang_ky_nguoidung`, `dang_nhap`, `lay_nguoidung_theo_id`, `lay_danh_sach_nguoidung` |
+| Giỏ hàng | `lay_gio_hang`, `them_vao_gio_hang`, `cap_nhat_so_luong_gio_hang`, `xoa_khoi_gio_hang`, `dem_san_pham_gio_hang` |
+| Đơn hàng | `tao_don_hang`, `lay_don_hang_cua_nguoidung`, `lay_chi_tiet_don_hang`, `lay_tat_ca_don_hang`, `cap_nhat_trang_thai_don_hang` |
+| Đánh giá | `lay_danh_gia_game`, `luu_danh_gia` |
+
+Một số điểm đáng chú ý:
+
+- `xoa_game()` **không xóa hẳn** mà chỉ đặt `dang_ban = 0`, vì game có thể đã nằm trong đơn hàng cũ. Mọi truy vấn hiển thị game đều lọc `dang_ban = 1`.
+- `them_vao_gio_hang()` dùng `insert ... on duplicate key update`, nên thêm game đã có trong giỏ thì cộng dồn số lượng.
+- `cap_nhat_so_luong_gio_hang()` với số lượng `<= 0` sẽ xóa game khỏi giỏ.
+- `lay_danh_sach_game()` và `lay_game_theo_id()` kèm theo điểm đánh giá trung bình và số lượt đánh giá.
 
 ---
 
-## 4. Cách hoạt động
+## 6. Các luồng chức năng
 
-JavaScript chạy trên trình duyệt nên **không kết nối trực tiếp** với MySQL. Luồng dữ liệu như sau:
+### 6.1 Đăng ký, đăng nhập, đăng xuất
 
-```
-Trình duyệt (JS, Dũng) --fetch--> api/*.php (Dũng) --gọi hàm--> includes/db.php (Huy) --PDO--> MySQL
-```
+- **Đăng ký** (`register.php`): kiểm tra đủ trường, mật khẩu xác nhận khớp, mật khẩu ít nhất 6 ký tự. Sau đó `dang_ky_nguoidung()` kiểm tra trùng tên đăng nhập hoặc email rồi lưu mật khẩu đã băm. Tài khoản mới luôn có vai trò `khach`.
+- **Đăng nhập** (`login.php`): nhập tên đăng nhập **hoặc** email. `dang_nhap()` so sánh bằng `password_verify()`. Đúng thì lưu thông tin người dùng (không gồm mật khẩu) vào `$_SESSION['user']`. Admin được chuyển tới `admin/index.php`, khách tới `index.php`.
+- **Đăng xuất** (`logout.php`): xóa session và về trang chủ.
 
-- Các trang PHP ở thư mục gốc và `admin/` (Hiếu) dựng khung trang và dùng HTML/CSS do Hiếu thiết kế. Khi cần dữ liệu, các trang này gọi các hàm trong `includes/db.php` của Huy.
-- JS của Dũng gọi các endpoint trong `api/` để lấy hoặc gửi dữ liệu, rồi cập nhật giao diện mà không cần tải lại trang. Mỗi endpoint trong `api/` nhận yêu cầu, gọi hàm tương ứng trong `includes/db.php` và trả JSON.
-- **Huy** đảm bảo mọi truy vấn nằm trong `includes/db.php` và dùng **prepared statement** (dấu `?`) để tránh SQL injection. Mật khẩu lưu bằng `password_hash()`.
-- Danh sách các hàm trong `includes/db.php` (tên hàm, tham số, giá trị trả về) cần được ghi trong README hoặc ở đầu file để Hiếu và Dũng biết cách gọi.
+### 6.2 Phân quyền
 
----
+`includes/functions.php` có các hàm kiểm tra:
 
-## 5. Cơ sở dữ liệu
+- `isLoggedIn()`: có `$_SESSION['user']` hay không.
+- `isAdmin()`: `vai_tro` trong session là `admin`.
+- `requireLogin()`: chưa đăng nhập thì chuyển về `login.php`.
+- `requireAdmin()`: không phải admin thì chuyển về `login.php`. Mọi trang trong `admin/` đều gọi hàm này ở đầu file.
 
-Các bảng dự kiến (có thể điều chỉnh, mọi thay đổi phải cập nhật trong `database/schema.sql`):
+### 6.3 Xem và tìm game
 
-| Bảng | Mô tả |
+- `index.php`: lấy danh sách game đang bán và hiển thị tối đa 6 game đầu ở mục nổi bật. Nếu chưa có `config/db.php` hoặc chưa import database, trang dùng dữ liệu mẫu có sẵn trong code để vẫn xem được giao diện.
+- `games.php`: đọc `?ma_theloai=` (lọc thể loại) và `?tukhoa=` (tìm theo tên, `like %từ khóa%`). Hai điều kiện dùng chung được. Hàng nút lọc thể loại được dựng từ bảng `theloai`.
+- `game-detail.php?ma_game=`: hiển thị thông tin chi tiết, điểm trung bình, danh sách đánh giá và nút "Thêm vào giỏ hàng". Game không tồn tại hoặc đã ẩn thì hiện thông báo không tìm thấy.
+- Ô tìm kiếm trên thanh điều hướng là một form `GET` gửi tới `games.php`.
+
+### 6.4 Giỏ hàng
+
+Giỏ hàng lưu **trong MySQL** theo từng người dùng (bảng `giohang`), không lưu trong session, nên bắt buộc đăng nhập.
+
+- Nút "Thêm vào giỏ" là link `cart.php?add=<ma_game>`: thêm một sản phẩm rồi chuyển về `cart.php`.
+- Trong `cart.php`, form POST với `action=update` đổi số lượng và `action=delete` xóa dòng.
+- Tổng tiền được cộng từ `thanh_tien = gia * so_luong` do câu SQL tính sẵn.
+- Số trên biểu tượng giỏ hàng ở thanh điều hướng lấy từ `dem_san_pham_gio_hang()`.
+
+### 6.5 Đặt hàng
+
+1. `checkout.php` (cần đăng nhập) hiển thị giỏ hàng và ô ghi chú. Giỏ trống thì chuyển về `cart.php`.
+2. Khi gửi form, `tao_don_hang()` chạy trong **một transaction**:
+   - lấy giỏ hàng cùng giá hiện tại của từng game,
+   - tính tổng tiền và tạo dòng trong `donhang` (trạng thái mặc định `cho_xu_ly`),
+   - ghi từng dòng vào `chitietdonhang` với `don_gia` là giá lúc đó,
+   - xóa giỏ hàng,
+   - `commit`. Nếu lỗi ở bước nào thì `rollBack` toàn bộ.
+3. Thành công thì chuyển tới `orders.php?success=1`.
+
+Trang này chưa có cổng thanh toán thật. Đơn được tạo ở trạng thái "Chờ xử lý" và admin đổi trạng thái thủ công.
+
+### 6.6 Lịch sử đơn hàng
+
+`orders.php` (cần đăng nhập) liệt kê đơn của chính người đang đăng nhập, mới nhất trước, với trạng thái hiển thị bằng nhãn tiếng Việt (Chờ xử lý, Đã thanh toán, Đã hủy). `lay_chi_tiet_don_hang()` nhận thêm `ma_nguoidung` để người dùng không xem được đơn của người khác.
+
+### 6.7 Trang quản trị (`admin/`)
+
+| Trang | Chức năng |
 |---|---|
-| `nguoidung` | Tài khoản người dùng và quản trị viên |
-| `theloai` | Thể loại game |
-| `game` | Thông tin game (tên, giá, mô tả, hình ảnh, thể loại) |
-| `giohang` | Giỏ hàng của từng người dùng |
-| `donhang` | Đơn hàng |
-| `chitietdonhang` | Các game trong từng đơn hàng |
-| `danhgia` | Đánh giá game của người dùng (tính năng mở rộng) |
+| `index.php` | Thống kê: số game đang bán, số đơn, số người dùng, doanh thu (tổng tiền các đơn `da_thanh_toan`) |
+| `games.php` | Form thêm game, sửa game (`?edit=<id>`), bảng danh sách, nút "Xóa" (thực chất là ẩn). Có upload ảnh, file được lưu vào `assets/img/games/` với tên `<timestamp>_<tên gốc>` |
+| `orders.php` | Danh sách mọi đơn kèm người đặt, form đổi trạng thái (chỉ nhận 3 giá trị hợp lệ) |
+| `users.php` | Danh sách người dùng |
 
 ---
 
-## 6. Danh sách API (hợp đồng giữa JS và PHP)
+## 7. Bảo mật đã áp dụng
 
-Tất cả API trả về JSON. Bảng dưới là bản dự kiến, nếu thay đổi thì Dũng cập nhật tại đây và báo cho cả nhóm. Dữ liệu trong các endpoint lấy từ các hàm của `includes/db.php` (Huy).
-
-| Endpoint | Phương thức | Tham số | Kết quả |
-|---|---|---|---|
-| `api/games.php` | GET | `ma_theloai` (tùy chọn), `tukhoa` (tùy chọn) | Mảng các game: `ma_game`, `ten_game`, `gia`, `hinh_anh`, `ten_theloai` |
-| `api/games.php` | GET | `ma_game` | Thông tin chi tiết một game |
-| `api/cart.php` | GET | | Danh sách game trong giỏ hàng của người dùng đang đăng nhập |
-| `api/cart.php` | POST | `ma_game`, `so_luong` | Thêm game vào giỏ hàng |
-| `api/cart.php` | PUT | `ma_game`, `so_luong` | Cập nhật số lượng |
-| `api/cart.php` | DELETE | `ma_game` | Xóa game khỏi giỏ hàng |
-| `api/orders.php` | POST | Thông tin đặt hàng | Tạo đơn hàng từ giỏ hàng |
-| `api/orders.php` | GET | | Lịch sử đơn hàng của người dùng |
-| `api/auth.php` | POST | `hanhdong` (`dangnhap` / `dangky` / `dangxuat`), thông tin tài khoản | Kết quả đăng nhập, đăng ký, đăng xuất |
+- Prepared statement cho mọi truy vấn.
+- Mật khẩu băm bằng `password_hash()` và kiểm tra bằng `password_verify()`.
+- Dữ liệu in ra HTML đều qua `htmlspecialchars()` để chống XSS.
+- Kiểm tra quyền ở đầu mỗi trang cần bảo vệ; đơn hàng được lọc theo chủ sở hữu.
+- `config/db.php` (thông tin kết nối thật) nằm trong `.gitignore`, không đưa lên GitHub.
 
 ---
 
-## 7. Hướng dẫn cài đặt
+## 8. Cài đặt và chạy
 
-1. Cài **XAMPP** và bật **Apache** và **MySQL**.
-2. Clone dự án vào thư mục `htdocs` của XAMPP:
-   ```bash
-   cd C:/xampp/htdocs
-   git clone https://github.com/huytranq10-create/web-ban-game.git web-ban-game
-   ```
-3. Tạo file cấu hình kết nối: copy `config/db.sample.php` thành `config/db.php`, rồi sửa thông tin (tên database, user, mật khẩu) cho đúng với máy của bạn.
-4. Mở **phpMyAdmin** (`http://localhost/phpmyadmin`), import lần lượt:
-   - `database/schema.sql`
-   - `database/seed.sql`
-5. Mở trình duyệt và truy cập: `http://localhost/web-ban-game`
+1. Cài **XAMPP**, bật **Apache** và **MySQL**.
+2. Đặt thư mục dự án vào `C:/xampp/htdocs/web-ban-game`.
+3. Copy `config/db.sample.php` thành `config/db.php`, sửa thông tin nếu cần. Mặc định XAMPP: host `localhost`, port `3306`, database `web_ban_game`, user `root`, mật khẩu rỗng.
+4. Mở **phpMyAdmin** (`http://localhost/phpmyadmin`) và import lần lượt:
+   1. `database/schema.sql` (tạo database và bảng; file có lệnh `drop table`, import lại sẽ mất dữ liệu cũ)
+   2. `database/seed.sql` (dữ liệu mẫu)
+5. Truy cập `http://localhost/web-ban-game`.
 
----
+Kiểm tra nhanh kết nối và các hàm DB: mở `http://localhost/web-ban-game/test-db.php`. **Xóa file này trước khi nộp bài hoặc đưa lên mạng.**
 
-## 8. Quy tắc làm việc với Git
+### Tài khoản mẫu
 
-- Nhánh `main` chỉ chứa bản chạy được. **Không push trực tiếp lên `main`.**
-- Mỗi người làm trên nhánh riêng, đặt tên theo dạng `feature/<nội-dung>`, ví dụ:
-  - `feature/giao-dien-trang-chu` (Hiếu)
-  - `feature/database-schema` (Huy)
-  - `feature/api-gio-hang` (Dũng)
-- Làm xong thì tạo **Pull Request** vào `main`, nhóm trưởng xem và merge.
-- Viết nội dung commit rõ ràng, ví dụ: `Thêm API lấy danh sách game`.
-- Trước khi bắt đầu làm việc mỗi ngày, chạy `git pull` để cập nhật mã mới nhất.
-- **Không commit** `config/db.php`. File `.gitignore` tối thiểu:
-  ```
-  config/db.php
-  .vscode/
-  .idea/
-  ```
-- Mọi thay đổi database phải được sửa trong `database/schema.sql` và `database/seed.sql` rồi commit, **không** chỉ sửa trực tiếp trong phpMyAdmin.
+| Tên đăng nhập | Mật khẩu | Vai trò |
+|---|---|---|
+| `admin` | `Admin@123` | Quản trị viên |
+| `khach1` | `Khach@123` | Khách hàng |
+| `khach2` | `Khach@123` | Khách hàng |
+
+> Website cần PHP và MySQL để chạy. GitHub Pages hoặc mở trực tiếp file `.php` bằng trình duyệt sẽ không hoạt động.
 
 ---
 
-## 9. Quy ước đặt tên
+## 9. Hạn chế hiện tại
 
-- Tên thư mục và file: chữ thường, nối bằng dấu gạch ngang, không dấu, không khoảng trắng (ví dụ `game-detail.php`).
-- Tên bảng và cột trong database: chữ thường, không dấu, nối bằng dấu gạch dưới (ví dụ `ma_game`, `ten_game`).
-- Từ khóa SQL viết chữ thường.
-
----
-
-## 10. Tiến độ
-
-- [ ] Chốt danh sách bảng và cột, viết `schema.sql`, `seed.sql`
-- [ ] Giao diện các trang chính (trang chủ, danh sách game, chi tiết game)
-- [ ] `config/db.php` và `api/games.php`
-- [ ] Hiển thị danh sách game bằng JS
-- [ ] Đăng ký và đăng nhập
-- [ ] Giỏ hàng
-- [ ] Đặt hàng và lịch sử đơn hàng
-- [ ] Trang quản trị
-- [ ] Tìm kiếm, lọc theo thể loại
-- [ ] Kiểm thử và hoàn thiện
+- Chưa có form để người dùng gửi đánh giá. Hàm `luu_danh_gia()` đã có trong `db.php` nhưng chưa trang nào gọi.
+- Menu "GAMES" trên thanh điều hướng có các link `games.php?loai=...` (offline, full, steam-key, xbox), nhưng `games.php` chưa xử lý tham số `loai`, nên các link này chưa lọc được.
+- Chưa có thanh toán trực tuyến; việc xác nhận thanh toán do admin đổi trạng thái đơn.
+- Chưa có token CSRF cho các form POST.
+- Upload ảnh ở trang admin chưa kiểm tra loại file.
+- `assets/js/` và `api/` chưa được cài đặt (xem mục 1).
