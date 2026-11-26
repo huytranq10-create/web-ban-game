@@ -188,5 +188,5 @@ Trang này chưa có cổng thanh toán thật. Đơn được tạo ở trạng
 - Mật khẩu băm bằng `password_hash()` và kiểm tra bằng `password_verify()`.
 - Dữ liệu in ra HTML đều qua `htmlspecialchars()` để chống XSS.
 - Kiểm tra quyền ở đầu mỗi trang cần bảo vệ; đơn hàng được lọc theo chủ sở hữu.
-- `config/db.php` (thông tin kết nối thật) nằm trong `.gitignore`, không đưa lên GitHub.
+
 
