@@ -2,7 +2,7 @@
 
 Đồ án môn **Lập trình ứng dụng web** – Trường Đại học Văn Lang.
 
-Website bán game bản quyền viết bằng **PHP thuần + MySQL**. Khách hàng xem và tìm game, thêm vào giỏ, đặt hàng và xem lịch sử đơn. Quản trị viên quản lý game, đơn hàng và người dùng.
+Website bán game bản quyền viết bằng **PHP + MySQL**. Khách hàng xem và tìm game, thêm vào giỏ, đặt hàng và xem lịch sử đơn. Quản trị viên quản lý game, đơn hàng và người dùng.
 
 ---
 
